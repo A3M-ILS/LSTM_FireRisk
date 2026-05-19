@@ -1,0 +1,22 @@
+{
+  "lat_min": 35.0,
+  "lat_max": 47.0,
+  "lon_min": -5.0,
+  "lon_max": 28.0,
+  "resolution": 0.25,
+  "n_lat": 49,
+  "n_lon": 133,
+  "features": [
+    "ndvi",
+    "temp_max",
+    "humidity",
+    "wind_speed",
+    "precip",
+    "drought_index",
+    "past_hotspot_count",
+    "past_frp"
+  ],
+  "seq_len": 15,
+  "has_era5_2023": true,
+  "has_firms_2023": true
+}

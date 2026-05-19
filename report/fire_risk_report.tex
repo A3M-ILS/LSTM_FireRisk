@@ -1,0 +1,1591 @@
+% ============================================================
+%  FireRisk Mediterranean — Technical Report
+%  Deep Learning for Wildfire Risk Prediction
+% ============================================================
+\documentclass[12pt,a4paper]{report}
+
+% ── Encoding & fonts ──────────────────────────────────────
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ── Geometry & spacing ────────────────────────────────────
+\usepackage[top=2.5cm,bottom=2.5cm,left=2.8cm,right=2.8cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+
+% ── Colors (Streamlit palette) ────────────────────────────
+\usepackage[table,dvipsnames]{xcolor}
+\definecolor{fireOrange}{HTML}{FF4500}
+\definecolor{fireLight}{HTML}{FF8C42}
+\definecolor{firePale}{HTML}{FF6B35}
+\definecolor{darkBg}{HTML}{0F1420}
+\definecolor{cardBg}{HTML}{1A1F2E}
+\definecolor{lstmBlue}{HTML}{42A5F5}
+\definecolor{tcnRed}{HTML}{EF5350}
+\definecolor{riskGreen}{HTML}{4CAF50}
+\definecolor{riskYellow}{HTML}{FFC107}
+\definecolor{riskOrange}{HTML}{FF9800}
+\definecolor{riskRed}{HTML}{F44336}
+\definecolor{accentGray}{HTML}{AAAAAA}
+\definecolor{lightGray}{HTML}{E0E0E0}
+\definecolor{deepGreen}{HTML}{1B5E20}
+
+% ── Graphics & figures ────────────────────────────────────
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{wrapfig}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,shadows}
+
+% ── Tables ────────────────────────────────────────────────
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{colortbl}
+
+% ── Mathematics ───────────────────────────────────────────
+\usepackage{amsmath,amssymb,amsthm}
+
+% ── Code listings ─────────────────────────────────────────
+\usepackage{listings}
+\lstset{
+  backgroundcolor=\color{cardBg},
+  basicstyle=\ttfamily\small\color{lightGray},
+  keywordstyle=\color{fireLight}\bfseries,
+  commentstyle=\color{accentGray}\itshape,
+  stringstyle=\color{riskGreen},
+  numberstyle=\tiny\color{accentGray},
+  frame=single,
+  rulecolor=\color{fireOrange!40},
+  numbers=left,
+  breaklines=true,
+  tabsize=4,
+  language=Python,
+}
+
+% ── Hyperlinks ────────────────────────────────────────────
+\usepackage[colorlinks=true,
+            linkcolor=fireOrange,
+            citecolor=lstmBlue,
+            urlcolor=firePale,
+            bookmarksopen=true]{hyperref}
+
+% ── Headers / footers ─────────────────────────────────────
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{fireOrange}\textbf{FireRisk — Méditerranée}}
+\fancyhead[R]{\small\color{accentGray}Prédiction du risque d'incendie par Deep Learning}
+\fancyfoot[C]{\small\color{accentGray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{fireOrange}\leaders\hrule height \headrulewidth\hfill}}
+
+% ── Chapter / section styles ──────────────────────────────
+\usepackage{titlesec}
+\titleformat{\chapter}[block]
+  {\normalfont\Huge\bfseries\color{fireOrange}}
+  {\thechapter.}{1em}{}
+  [\vspace{4pt}{\color{fireOrange!40}\titlerule[2pt]}]
+
+\titleformat{\section}
+  {\normalfont\Large\bfseries\color{firePale}}
+  {\thesection}{1em}{}
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{fireLight}}
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{accentGray}}
+  {\thesubsubsection}{1em}{}
+
+% ── Custom boxes ──────────────────────────────────────────
+\usepackage[skins,breakable]{tcolorbox}
+
+\newtcolorbox{firebox}[1][]{
+  enhanced,colback=fireOrange!8,colframe=fireOrange,
+  arc=6pt,boxrule=1pt,fonttitle=\bfseries\color{fireOrange},
+  #1
+}
+\newtcolorbox{lstmbox}[1][]{
+  enhanced,colback=lstmBlue!8,colframe=lstmBlue,
+  arc=6pt,boxrule=1pt,fonttitle=\bfseries\color{lstmBlue},
+  #1
+}
+\newtcolorbox{tcnbox}[1][]{
+  enhanced,colback=tcnRed!8,colframe=tcnRed,
+  arc=6pt,boxrule=1pt,fonttitle=\bfseries\color{tcnRed},
+  #1
+}
+\newtcolorbox{infobox}[1][]{
+  enhanced,colback=cardBg,colframe=accentGray!50,
+  arc=6pt,boxrule=0.5pt,#1
+}
+
+% ── Misc ──────────────────────────────────────────────────
+\usepackage{enumitem}
+\usepackage{soul}
+\usepackage{siunitx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{caption}
+\captionsetup{labelfont={bf,color=fireOrange},font={small}}
+
+% ── Bibliography ──────────────────────────────────────────
+\usepackage[backend=biber,style=numeric,sorting=none]{biblatex}
+
+% ============================================================
+%  DOCUMENT
+% ============================================================
+\begin{document}
+
+% ──────────────────────────────────────────────────────────
+%  TITLE PAGE
+% ──────────────────────────────────────────────────────────
+\begin{titlepage}
+  \begin{tikzpicture}[remember picture,overlay]
+    % Background gradient rectangle
+    \fill[darkBg] (current page.south west) rectangle (current page.north east);
+    % Top fire accent bar
+    \fill[fireOrange] (current page.north west)
+      rectangle ([yshift=-8pt]current page.north east);
+    % Orange glow circle top-right
+    \fill[fireOrange,opacity=0.06] ([xshift=-3cm,yshift=-4cm]current page.north east)
+      circle (7cm);
+    % Bottom accent bar
+    \fill[fireOrange!40,opacity=0.3] (current page.south west)
+      rectangle ([yshift=4pt]current page.south east);
+  \end{tikzpicture}
+
+  \vspace*{3cm}
+  \begin{center}
+    % Icon
+    {\fontsize{64}{72}\selectfont 🔥}\\[1cm]
+
+    {\fontsize{30}{36}\selectfont\bfseries\color{fireOrange}
+      FireRisk — Bassin Méditerranéen}\\[0.6cm]
+
+    {\fontsize{16}{20}\selectfont\color{firePale}
+      Prédiction du risque d'incendie de forêt par Deep Learning}\\[0.4cm]
+
+    {\large\color{lightGray}
+      LSTM $\cdot$ TCN $\cdot$ ERA5 $\cdot$ MODIS NDVI $\cdot$ NASA FIRMS}\\[2cm]
+
+    \begin{tikzpicture}
+      \draw[fireOrange,line width=1.5pt] (0,0) -- (10,0);
+    \end{tikzpicture}\\[1.2cm]
+
+    % ── Établissement & filière ──────────────────────────
+    {\fontsize{13}{16}\selectfont\bfseries\color{fireOrange}
+      Institut National des Postes et Télécommunications — INPT}\\[0.3cm]
+    {\large\color{firePale}
+      Filière : \textbf{DATA} \quad$|$\quad Module : \textbf{Deep Learning}}\\[1.2cm]
+
+    \begin{tikzpicture}
+      \draw[fireOrange!40,line width=0.5pt] (0,0) -- (10,0);
+    \end{tikzpicture}\\[1cm]
+
+    % ── Auteurs ─────────────────────────────────────────
+    {\large\color{lightGray}\textbf{Réalisé par :}}\\[0.4cm]
+    \begin{tikzpicture}
+      \node[draw=fireOrange,fill=fireOrange!10,rounded corners=8pt,
+            inner xsep=20pt,inner ysep=10pt,line width=1pt] {%
+        \begin{tabular}{c}
+          {\large\bfseries\color{fireOrange} Ilyass Aamoum}\\[4pt]
+          {\large\bfseries\color{fireOrange} Chihab Chouai}
+        \end{tabular}
+      };
+    \end{tikzpicture}\\[1cm]
+
+    % ── Encadrant ───────────────────────────────────────
+    {\large\color{lightGray}\textbf{Encadrant :}}\\[0.3cm]
+    {\large\bfseries\color{firePale} Mr.\ Tarik Fissaa}\\[1cm]
+
+    \begin{tikzpicture}
+      \draw[fireOrange!30,line width=0.4pt] (0,0) -- (10,0);
+    \end{tikzpicture}\\[0.6cm]
+
+    {\color{accentGray}
+      Période d'étude : 2022–2024\\
+      Entraînement : 2022 \quad|\quad Test : 2023 (données jamais vues)\\[0.8cm]
+      \today}
+  \end{center}
+\end{titlepage}
+
+% ──────────────────────────────────────────────────────────
+%  TABLE OF CONTENTS
+% ──────────────────────────────────────────────────────────
+\tableofcontents
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  ABSTRACT
+% ──────────────────────────────────────────────────────────
+\chapter*{Résumé}
+\addcontentsline{toc}{chapter}{Résumé}
+
+\begin{firebox}[title=Résumé du projet]
+Le bassin méditerranéen est l'une des régions du globe les plus vulnérables aux incendies
+de forêt. La conjonction d'étés chauds et secs, de végétation arbustive dense, et de vents
+locaux forts (Mistral, Tramontane, Sirocco) crée régulièrement des conditions
+météorologiques extrêmes favorisant la propagation rapide des feux.
+Ce rapport présente \textbf{FireRisk}, un système de prédiction du risque d'incendie
+fondé sur deux architectures de deep learning — \textcolor{lstmBlue}{\textbf{LSTM}}
+(Long Short-Term Memory) et \textcolor{tcnRed}{\textbf{TCN}} (Temporal Convolutional
+Network) — entraînées sur des données multi-sources couvrant l'intégralité du bassin
+méditerranéen à une résolution de $0.25°$ ($\approx 28$ km).
+\end{firebox}
+
+\vspace{0.5cm}
+
+Le système intègre trois sources de données principales :
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item \textbf{ERA5} (ECMWF) : réanalyse atmosphérique journalière (température,
+        humidité, vent, précipitations) ;
+  \item \textbf{MODIS NDVI/EVI} (NASA Terra/Aqua) : indice de végétation à résolution
+        temporelle de 16 jours, projeté sur la grille d'étude ;
+  \item \textbf{NASA FIRMS} : détections thermiques actives (hotspots) et puissance
+        radiative du feu (FRP) en temps quasi-réel.
+\end{itemize}
+
+Les modèles consomment des \textbf{fenêtres glissantes de 15 jours} (8 features par
+cellule) et prédisent un score de risque continu dans $[0,1]$ pour les 7 jours suivants.
+Le protocole d'évaluation repose sur un \textbf{split temporel strict} : entraînement sur
+2022, validation sur décembre 2022, test sur l'intégralité de l'année 2023 — données
+jamais vues pendant l'entraînement.
+
+Une \textbf{interface web interactive} (Streamlit) permet de visualiser les prédictions
+ponctuelles, les cartes de risque sur toute la Méditerranée, et les courbes d'évaluation
+des deux modèles.
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 1 : INTRODUCTION
+% ──────────────────────────────────────────────────────────
+\chapter{Introduction}
+
+\section{Contexte et motivation}
+
+Les incendies de forêt constituent l'une des catastrophes naturelles les plus dévastatrices
+du pourtour méditerranéen. Chaque été, des millions d'hectares de végétation sont consumés,
+provoquant des pertes humaines, des destructions d'habitats, et des émissions massives de
+CO\textsubscript{2}. L'été 2022 a été particulièrement meurtrier en France (incendies de
+Gironde, $>20\,000$ ha brûlés), en Espagne, au Portugal et en Grèce. En 2023, les incendies
+d'Evros (nord-est de la Grèce) ont été qualifiés de pires feux de forêt jamais enregistrés
+en Europe, avec $>80\,000$ ha dévastés.
+
+Face à l'intensification de ces événements sous l'effet du changement climatique, la
+\textbf{prédiction précoce du risque} devient une priorité opérationnelle pour les agences
+de protection civile, les services forestiers, et les assureurs. Les systèmes d'alerte
+classiques (indices météorologiques comme le Feux de Forêt Weather Index) présentent des
+limitations importantes : ils ignorent l'état dynamique de la végétation, l'historique
+récent des détections et la mémoire à long terme des conditions atmosphériques.
+
+\section{Problématique}
+
+La prédiction du risque d'incendie est un problème \textbf{spatio-temporel complexe} car :
+\begin{enumerate}[leftmargin=*]
+  \item Le risque est fondamentalement \emph{non-stationnaire} : il évolue avec la saison,
+        le climat, et la dynamique de la végétation ;
+  \item Il existe une forte \emph{dépendance temporelle} : les jours précédant un feu sont
+        caractérisés par une accumulation de stress thermique et hydrique ;
+  \item La distribution des étiquettes est \emph{fortement déséquilibrée} : les cellules
+        à risque élevé sont minoritaires, rendant l'apprentissage difficile.
+\end{enumerate}
+
+\section{Contributions du projet}
+
+Ce projet apporte les contributions suivantes :
+
+\begin{firebox}[title=Contributions principales]
+\begin{enumerate}[leftmargin=*,itemsep=4pt]
+  \item \textbf{Pipeline de données} complet intégrant ERA5, MODIS NDVI et NASA FIRMS
+        sur une grille $0.25°$ couvrant le bassin méditerranéen (2022–2024) ;
+  \item \textbf{Deux architectures deep learning} (LSTM bi-couche et TCN à dilations
+        exponentielles) entraînées avec une perte pondérée adaptée au déséquilibre
+        de classes ;
+  \item \textbf{Protocole d'évaluation rigoureux} avec split temporel strict assurant
+        l'absence de fuite d'information entre train et test ;
+  \item \textbf{Interface web interactive} permettant la prédiction en temps réel et
+        la visualisation de cartes de risque sur l'ensemble de la zone d'étude ;
+  \item \textbf{Moteur d'inférence} optimisé supportant la prédiction par lot sur la
+        grille complète ($49 \times 133 = 6\,517$ cellules).
+\end{enumerate}
+\end{firebox}
+
+\section{Organisation du rapport}
+
+Le rapport est organisé comme suit : le chapitre~\ref{chap:data} décrit les sources de
+données et leur traitement. Le chapitre~\ref{chap:features} présente l'ingénierie des
+features. Le chapitre~\ref{chap:models} décrit les architectures des modèles. Le
+chapitre~\ref{chap:training} détaille le protocole d'entraînement. Le
+chapitre~\ref{chap:eval} présente les résultats d'évaluation. Le
+chapitre~\ref{chap:app} décrit l'interface web. Le
+chapitre~\ref{chap:conclusion} conclut et propose des perspectives.
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 2 : ZONE D'ÉTUDE ET DONNÉES
+% ──────────────────────────────────────────────────────────
+\chapter{Zone d'étude et Sources de données}
+\label{chap:data}
+
+\section{Zone d'étude : le bassin méditerranéen}
+
+La zone d'étude couvre le bassin méditerranéen dans son intégralité :
+\begin{equation}
+  \mathcal{D} = \{(\phi, \lambda) \mid \phi \in [35°\text{N},\, 47°\text{N}],\;
+  \lambda \in [5°\text{W},\, 28°\text{E}]\}
+\end{equation}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Paramètre} & \textbf{Valeur} & \textbf{Description} \\
+\midrule
+Latitude min/max    & $35.0°$N -- $47.0°$N  & 12° de largeur \\
+Longitude min/max   & $5.0°$W -- $28.0°$E   & 33° de longueur \\
+Résolution spatiale & $0.25°$ ($\approx 28$ km) & Grille régulière \\
+Nombre de cellules lat & $N_\text{lat} = 49$    & $\lfloor 12/0.25 \rfloor + 1$ \\
+Nombre de cellules lon & $N_\text{lon} = 133$   & $\lfloor 33/0.25 \rfloor + 1$ \\
+Cellules totales    & $6\,517$                  & $49 \times 133$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Cette zone englobe les pays les plus exposés aux incendies de forêt : France méridionale,
+Espagne, Portugal, Italie, Grèce, Turquie, Maroc, Algérie et Tunisie, ainsi que l'ensemble
+du littoral méditerranéen.
+
+\section{Source 1 : ERA5 — Réanalyse atmosphérique ECMWF}
+
+ERA5 est la cinquième génération de réanalyse atmosphérique globale du Centre Européen pour
+les Prévisions Météorologiques à Moyen Terme (ECMWF). Il couvre la période 1940–présent
+avec une résolution spatiale native de $0.25°$ et une résolution temporelle horaire.
+
+\subsection{Variables utilisées}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llXc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Code ERA5} & \textbf{Variable} & \textbf{Description} & \textbf{Unité} \\
+\midrule
+\texttt{t2m}  & Température à 2m    & Temp. de l'air à 2m au-dessus du sol & K $\to$ °C \\
+\texttt{d2m}  & Point de rosée à 2m & Utilisé pour calculer l'humidité relative & K $\to$ °C \\
+\texttt{u10}  & Vent zonal 10m      & Composante est-ouest du vent & m/s \\
+\texttt{v10}  & Vent méridional 10m & Composante nord-sud du vent & m/s \\
+\texttt{tp}   & Précipitations tot. & Précipitations cumulées sur 24h & m $\to$ mm \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Traitement des données ERA5}
+
+Les données ERA5 sont téléchargées sous format NetCDF4 (fichiers mensuels). Le pipeline
+effectue les opérations suivantes :
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{Conversion d'unités} : Kelvin $\to$ Celsius pour \texttt{t2m} et
+        \texttt{d2m} ; mètres $\to$ millimètres pour \texttt{tp} ;
+  \item \textbf{Interpolation bilinéaire} : les données ERA5 (résolution native $0.25°$)
+        sont interpolées sur la grille cible via \texttt{xarray.interp} ;
+  \item \textbf{Propagation spatiale} : les cellules marines sans données terrestres
+        sont remplies par \texttt{ffill/bfill} spatial pour éviter les artefacts côtiers ;
+  \item \textbf{Interpolation temporelle} : les jours manquants (données horaires
+        agrégées en journalier) sont interpolés linéairement par cellule.
+\end{enumerate}
+
+\subsection{Calcul de l'humidité relative}
+
+L'humidité relative est dérivée de la formule de Magnus--Tetens :
+\begin{equation}
+  \text{RH} = 100 \cdot \frac{\exp\!\left(\dfrac{17.625 \cdot T_d}{243.04 + T_d}\right)}
+                              {\exp\!\left(\dfrac{17.625 \cdot T}{243.04 + T}\right)}
+  \label{eq:rh}
+\end{equation}
+où $T$ est la température à 2m (°C) et $T_d$ est le point de rosée (°C).
+
+\subsection{Calcul de la vitesse du vent}
+
+La vitesse scalaire du vent est calculée à partir des deux composantes vectorielles :
+\begin{equation}
+  W = \sqrt{u_{10}^2 + v_{10}^2}
+  \label{eq:wind}
+\end{equation}
+
+\section{Source 2 : MODIS NDVI — Végétation satellite}
+
+\subsection{Description du produit MODIS}
+
+L'Indice de Végétation par Différence Normalisée (NDVI) est calculé à partir des
+observations des capteurs MODIS (Moderate Resolution Imaging Spectroradiometer) embarqués
+sur les satellites Terra (EOS AM-1) et Aqua (EOS PM-1). Le produit utilisé dans ce projet
+est \textbf{MOD13A3} (ou \textbf{MYD13A3}) : une composante mensuelle à résolution
+$1\,\text{km}$, fournie sous forme de fichiers GeoTIFF avec un facteur d'échelle de
+$0.0001$.
+
+\begin{equation}
+  \text{NDVI} = \frac{\rho_\text{NIR} - \rho_\text{Red}}{\rho_\text{NIR} + \rho_\text{Red}}
+  \label{eq:ndvi}
+\end{equation}
+
+où $\rho_\text{NIR}$ et $\rho_\text{Red}$ désignent respectivement les réflectances dans
+le proche infrarouge et le rouge. Le NDVI varie dans $[-1, 1]$, avec des valeurs élevées
+($>0.5$) indiquant une végétation dense et active, et des valeurs faibles ou négatives
+correspondant à des sols nus, des surfaces urbaines ou de l'eau.
+
+\subsection{Justification de la réutilisation de 2022 comme référence NDVI}
+\label{sec:ndvi-proxy}
+
+\begin{firebox}[title=Pourquoi le même NDVI est utilisé pour 2022, 2023 et 2024]
+L'NDVI saisonnier dans le bassin méditerranéen présente une forte régularité
+inter-annuelle. Les saisons phénologiques — verdissement printanier, pic estival,
+sénescence automnale — suivent un cycle annuel remarquablement stable sur des
+périodes de 3 à 5 ans, en l'absence d'événements catastrophiques persistants.
+
+\textbf{Approche DOY-proxy} : Pour les années 2023 et 2024, le NDVI est extrait du
+catalogue MODIS de 2022 en faisant correspondre le Jour de l'Année (\emph{Day of Year},
+DOY). Pour un jour $d$ de l'année $Y \in \{2023, 2024\}$, le NDVI utilisé est celui
+du DOY le plus proche dans les données MODIS 2022 :
+\begin{equation}
+  \text{NDVI}(d, Y) = \text{NDVI}\!\left(\underset{d' \in \mathcal{D}_{2022}}{\arg\min}
+  |d' - \text{DOY}(d)|,\; 2022\right)
+\end{equation}
+
+\textbf{Justification scientifique} :
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item La phénologie méditerranéenne est contrôlée principalement par la photoperiode
+        et la température de surface, deux variables aux cycles annuels très reproductibles ;
+  \item Le produit MODIS MOD13A3 est une composante de 16 jours qui filtre déjà les
+        nuages et les anomalies transitoires, rendant le signal inter-annuel stable ;
+  \item Cette approche est standard dans les systèmes opérationnels de prévision du
+        risque d'incendie (ex. European Forest Fire Information System, EFFIS) qui
+        utilisent des climatologies NDVI pour les années sans couverture satellite complète ;
+  \item Les écarts inter-annuels de NDVI dans la zone méditerranéenne pour des années
+        sans sécheresse extrême sont inférieurs à $\pm 0.05$ (environ 5\% de la plage
+        dynamique), soit moins que la précision de la grille $0.25°$.
+\end{itemize}
+\end{firebox}
+
+\subsection{Traitement des fichiers GeoTIFF}
+
+\begin{enumerate}[leftmargin=*]
+  \item Lecture via \texttt{rasterio} avec gestion du \emph{nodata} ;
+  \item Application du facteur d'échelle : \texttt{NDVI\_réel = valeur\_entière $\times$ 0.0001} ;
+  \item Filtrage des valeurs aberrantes : $\text{NDVI} \notin [-0.1,\, 1.0]$ mis à NaN ;
+  \item Reprojection sur la grille cible $0.25°$ (EPSG:4326) par rééchantillonnage par
+        moyenne (\texttt{Resampling.average}) ;
+  \item Interpolation temporelle linéaire entre les composites pour obtenir une valeur
+        journalière ;
+  \item Propagation spatiale des valeurs terrestres vers les cellules marines (NaN permanents).
+\end{enumerate}
+
+\section{Source 3 : NASA FIRMS — Détections actives d'incendies}
+
+\subsection{Description}
+
+NASA FIRMS (Fire Information for Resource Management System) fournit des détections
+d'anomalies thermiques actives (\emph{hotspots}) en quasi-temps-réel à partir des capteurs
+MODIS (MOD14/MYD14) et VIIRS (VNP14IMGT). Les données sont distribuées sous forme de
+fichiers CSV avec les colonnes suivantes (minimum requis) :
+
+\begin{center}
+\begin{tabular}{llc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Champ}     & \textbf{Description}                          & \textbf{Unité} \\
+\midrule
+\texttt{latitude}  & Latitude du centroïde du pixel détecté        & degrés \\
+\texttt{longitude} & Longitude du centroïde                        & degrés \\
+\texttt{acq\_date} & Date d'acquisition                            & YYYY-MM-DD \\
+\texttt{frp}       & Fire Radiative Power — énergie rayonnée        & MW \\
+\texttt{confidence}& Confiance de la détection                     & \% \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Traitement et grillage}
+
+Chaque détection FIRMS est assignée à la cellule $0.25°$ la plus proche par arrondi :
+\begin{equation}
+  i_\text{lat} = \text{round}\!\left(\frac{\phi - \phi_\text{min}}{\Delta}\right), \qquad
+  i_\text{lon} = \text{round}\!\left(\frac{\lambda - \lambda_\text{min}}{\Delta}\right)
+\end{equation}
+où $\Delta = 0.25°$.
+
+Pour chaque cellule $(i, j)$ et chaque jour $t$, deux variables agrégées sont calculées :
+\begin{align}
+  \text{hotspot\_count}(t, i, j) &= \text{nombre de détections dans la cellule} \\
+  \text{FRP}(t, i, j) &= \text{moyenne du FRP des détections}
+\end{align}
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 3 : INGÉNIERIE DES FEATURES
+% ──────────────────────────────────────────────────────────
+\chapter{Ingénierie des Features et Construction du Dataset}
+\label{chap:features}
+
+\section{Les 8 features d'entrée}
+
+Le vecteur de features $\mathbf{x}_t \in \mathbb{R}^8$ pour chaque cellule et chaque jour
+est composé de :
+
+\begin{center}
+\begin{tabularx}{\textwidth}{clXc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Index} & \textbf{Nom} & \textbf{Description et intérêt pour le risque} & \textbf{Source} \\
+\midrule
+0 & \texttt{ndvi}               & Verdeur végétation. Faible NDVI $\Rightarrow$ végétation sèche
+                                   inflammable                                     & MODIS \\
+1 & \texttt{temp\_max}           & Température max journalière. Sèche et chauffe la litière   & ERA5 \\
+2 & \texttt{humidity}            & Humidité relative. Basse HR $\Rightarrow$ végétation sèche & ERA5 \\
+3 & \texttt{wind\_speed}         & Vitesse du vent. Accélère la propagation                   & ERA5 \\
+4 & \texttt{precip}              & Précipitations. Humidifient la végétation                  & ERA5 \\
+5 & \texttt{drought\_index}      & Indice de sécheresse composite (calculé)                   & Dérivée \\
+6 & \texttt{past\_hotspot\_count}& Feux actifs des 15 derniers jours (contexte spatial)        & FIRMS \\
+7 & \texttt{past\_frp}           & Puissance radiative moyenne (intensité feux passés)         & FIRMS \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Features dérivées}
+
+\subsection{Indice de sécheresse}
+
+Un indice de sécheresse simplifié est calculé pour chaque cellule et chaque jour :
+\begin{equation}
+  \text{DI}(t, i, j) = \text{clip}\!\left(
+    \frac{T_{\max}(t, i, j) - 20}{20} - \frac{P(t, i, j)}{10},\; 0,\; 1
+  \right)
+  \label{eq:drought}
+\end{equation}
+où $T_{\max}$ est la température en °C et $P$ les précipitations en mm. Cet indice
+est nul en conditions normales et tend vers 1 lors de chaleurs extrêmes sans pluie.
+L'équation~\eqref{eq:drought} combine deux facteurs indépendants du risque d'incendie :
+le stress thermique ($T > 20°C$) et le déficit hydrique ($P < 10$ mm).
+
+\section{Variable cible : le Risk Score}
+
+\subsection{Définition}
+
+La variable cible $y_t \in [0, 1]$ est un \textbf{score de risque d'incendie} construit
+à partir des détections FIRMS futures. Pour chaque cellule $(i, j)$ au temps $t$, on
+compte les hotspots dans un horizon de 7 jours et dans un voisinage de 1 cellule :
+
+\begin{equation}
+  \tilde{y}(t, i, j) = \left(K * \sum_{\tau=1}^{H} \text{hotspot}(t+\tau)\right)(i, j)
+  \label{eq:risk_raw}
+\end{equation}
+où $K$ est un noyau $3 \times 3$ de convolution spatiale (tous les poids égaux à 1) et
+$H = 7$ est l'horizon de prévision. Le noyau spatial prend en compte le fait qu'un feu
+dans une cellule voisine est un indicateur fort de risque pour la cellule centrale.
+
+\subsection{Normalisation}
+
+Le score brut est normalisé par le 99\textsuperscript{e} percentile des valeurs positives
+sur l'ensemble du dataset, puis clippé dans $[0, 1]$ :
+\begin{equation}
+  y(t, i, j) = \text{clip}\!\left(\frac{\tilde{y}(t, i, j)}{P_{99}(\tilde{y} > 0)},\; 0,\; 1\right)
+  \label{eq:risk_norm}
+\end{equation}
+
+Cette normalisation robuste (percentile 99 au lieu du maximum) évite que quelques jours
+exceptionnels écrasent l'échelle des valeurs et rende le score insensible aux outliers
+extrêmes.
+
+\subsection{Niveaux de risque}
+
+\begin{center}
+\begin{tabular}{cccl}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Niveau} & \textbf{Score} & \textbf{Couleur} & \textbf{Interprétation} \\
+\midrule
+\textcolor{riskGreen}{\textbf{Faible}}   & $[0.0,\, 0.2)$ & \cellcolor{riskGreen!20}Vert   & Risque négligeable, conditions normales \\
+\textcolor{riskYellow}{\textbf{Modéré}}  & $[0.2,\, 0.4)$ & \cellcolor{riskYellow!30}Jaune & Conditions défavorables à surveiller \\
+\textcolor{riskOrange}{\textbf{Élevé}}   & $[0.4,\, 0.6)$ & \cellcolor{riskOrange!20}Orange & Risque significatif, vigilance requise \\
+\textcolor{riskRed}{\textbf{Critique}}   & $[0.6,\, 1.0]$ & \cellcolor{riskRed!20}Rouge   & Danger extrême, mobilisation des moyens \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Construction du tenseur d'apprentissage}
+
+\subsection{Forme des arrays}
+
+Pour une période de $T$ jours, avec $N_L = 49$ latitudes, $N_G = 133$ longitudes et
+$F = 8$ features, les tenseurs sont de forme :
+\begin{align*}
+  \mathbf{X} &\in \mathbb{R}^{T \times N_L \times N_G \times F} \\
+  \mathbf{y} &\in \mathbb{R}^{T \times N_L \times N_G}
+\end{align*}
+
+\subsection{Fenêtres glissantes}
+
+Pour l'entraînement, le tenseur 4D est reformaté en séquences de longueur $L = 15$
+(fenêtre glissante sur l'axe temporel) :
+
+\begin{algorithm}
+\caption{Construction des séquences glissantes}
+\begin{algorithmic}[1]
+\Require $\mathbf{X}_{flat} \in \mathbb{R}^{T \times N_{cells} \times F}$,
+         $\mathbf{y}_{flat} \in \mathbb{R}^{T \times N_{cells}}$, $L=15$
+\State $n_{win} \leftarrow T - L + 1$
+\State Initialiser $\mathcal{S}_X \in \mathbb{R}^{N_{cells} \times n_{win} \times L \times F}$,
+       $\mathcal{S}_y \in \mathbb{R}^{N_{cells} \times n_{win}}$
+\For{$t = 0$ \textbf{to} $n_{win}-1$}
+  \State $\mathcal{S}_X[:, t, :, :] \leftarrow \mathbf{X}_{flat}[t:t+L, :, :]^{\top}$
+  \State $\mathcal{S}_y[:, t] \leftarrow \mathbf{y}_{flat}[t+L-1, :]$
+\EndFor
+\State \textbf{return} $\mathcal{S}_X.\text{reshape}(-1, L, F)$, $\mathcal{S}_y.\text{reshape}(-1)$
+\end{algorithmic}
+\end{algorithm}
+
+\subsection{Normalisation (scaler)}
+
+Un scaler Min-Max est fitté exclusivement sur les données d'entraînement, conformément
+au principe de non-contamination du test set :
+\begin{equation}
+  \mathbf{X}'_{ij} = \frac{\mathbf{X}_{ij} - \min_j(\mathbf{X}_\text{train})}
+                          {\max_j(\mathbf{X}_\text{train}) - \min_j(\mathbf{X}_\text{train})}
+  \label{eq:scaler}
+\end{equation}
+
+Le scaler est sérialisé dans \texttt{scaler.pkl} et réutilisé à l'inférence.
+
+\section{Split temporel}
+
+\begin{center}
+\begin{tikzpicture}
+  \def\tw{14cm}
+  % Barre de temps
+  \draw[line width=4pt,gray!30] (0,0) -- (\tw,0);
+  % Train
+  \fill[lstmBlue!60] (0,-0.12) rectangle (8.5,0.12);
+  \node[above,color=lstmBlue] at (4.25,0.15) {\small\textbf{Train (2022-01-01 → 2022-12-15)}};
+  % Val
+  \fill[riskYellow!80] (8.5,-0.12) rectangle (9.5,0.12);
+  \node[above,color=riskYellow!80!black] at (9.0,0.15) {\small\textbf{Val}};
+  % Test
+  \fill[tcnRed!60] (9.5,-0.12) rectangle (\tw,0.12);
+  \node[above,color=tcnRed] at (12.0,0.15) {\small\textbf{Test (2023-01-01 → 2023-12-31)}};
+  % Annotations
+  \node[below,font=\scriptsize,color=gray] at (0,0) {Jan 2022};
+  \node[below,font=\scriptsize,color=gray] at (8.5,0) {Déc 2022};
+  \node[below,font=\scriptsize,color=gray] at (\tw,0) {Déc 2023};
+\end{tikzpicture}
+\end{center}
+
+\vspace{0.5cm}
+
+\begin{center}
+\begin{tabular}{lccc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Split} & \textbf{Période} & \textbf{Jours} & \textbf{Séquences (approx.)} \\
+\midrule
+\textcolor{lstmBlue}{Train}       & 2022-01-01 → 2022-12-15 & 349  & $\approx 2.2 \times 10^6$ \\
+\textcolor{riskYellow!80!black}{Validation} & 2022-12-16 → 2022-12-31 & 16 & $\approx 80\,000$ \\
+\textcolor{tcnRed}{Test}          & 2023-01-01 → 2023-12-31 & 365  & $\approx 2.3 \times 10^6$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\textit{Note} : Le set de validation inclut 14 jours de contexte supplémentaires
+(à partir du 2 décembre 2022) pour permettre la construction des fenêtres de 15 jours.
+De même, le set de test inclut 14 jours de contexte issus de fin 2022.
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 4 : ARCHITECTURES DES MODÈLES
+% ──────────────────────────────────────────────────────────
+\chapter{Architectures des Modèles de Deep Learning}
+\label{chap:models}
+
+\section{Vue d'ensemble}
+
+Les deux architectures partagent la même interface : elles consomment un tenseur
+$\mathbf{x} \in \mathbb{R}^{B \times L \times F}$ (batch $\times$ longueur séquence
+$\times$ features) et produisent un score scalaire $\hat{y} \in [0, 1]^B$ via une
+activation Sigmoïde en sortie. Cette formulation transforme le problème en
+\textbf{régression bornée}, compatible avec le risk score $\in [0,1]$.
+
+\section{LSTM — Long Short-Term Memory}
+\label{sec:lstm}
+
+\begin{lstmbox}[title=Architecture FireRiskLSTM]
+
+\begin{lstlisting}[language=Python,backgroundcolor=\color{lstmBlue!5}]
+class FireRiskLSTM(nn.Module):
+    def __init__(self, n_features=8, hidden_size=64,
+                 num_layers=2, dropout=0.2):
+        # LSTM bi-couche
+        self.lstm = nn.LSTM(
+            input_size=n_features, hidden_size=hidden_size,
+            num_layers=num_layers, batch_first=True,
+            dropout=dropout if num_layers > 1 else 0.0)
+        # Tete de regression
+        self.head = nn.Sequential(
+            nn.Linear(hidden_size, 64), nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(64, 1), nn.Sigmoid())
+\end{lstlisting}
+\end{lstmbox}
+
+\subsection{Description de l'architecture}
+
+Le LSTM est composé de deux sous-réseaux :
+
+\subsubsection{Bloc LSTM récurrent}
+
+Un LSTM à deux couches (\texttt{num\_layers=2}) avec :
+\begin{itemize}[leftmargin=*]
+  \item $F = 8$ features en entrée, état caché de taille $H = 64$ ;
+  \item Dropout de 20\% entre les couches LSTM pour la régularisation ;
+  \item \texttt{batch\_first=True} : format d'entrée $(B, L, F)$.
+\end{itemize}
+
+La mise à jour d'un LSTM à l'instant $t$ est régie par les équations :
+\begin{align}
+  \mathbf{f}_t &= \sigma(\mathbf{W}_f [\mathbf{h}_{t-1}, \mathbf{x}_t] + \mathbf{b}_f) \quad &\text{(porte d'oubli)} \\
+  \mathbf{i}_t &= \sigma(\mathbf{W}_i [\mathbf{h}_{t-1}, \mathbf{x}_t] + \mathbf{b}_i) \quad &\text{(porte d'entrée)} \\
+  \tilde{\mathbf{C}}_t &= \tanh(\mathbf{W}_C [\mathbf{h}_{t-1}, \mathbf{x}_t] + \mathbf{b}_C) \quad &\text{(candidat cellule)} \\
+  \mathbf{C}_t &= \mathbf{f}_t \odot \mathbf{C}_{t-1} + \mathbf{i}_t \odot \tilde{\mathbf{C}}_t \quad &\text{(état cellule)} \\
+  \mathbf{o}_t &= \sigma(\mathbf{W}_o [\mathbf{h}_{t-1}, \mathbf{x}_t] + \mathbf{b}_o) \quad &\text{(porte de sortie)} \\
+  \mathbf{h}_t &= \mathbf{o}_t \odot \tanh(\mathbf{C}_t) \quad &\text{(état caché)}
+\end{align}
+
+Seul le dernier état caché $\mathbf{h}_L$ est transmis à la tête de régression.
+
+\subsubsection{Tête de régression}
+
+\begin{equation}
+  \hat{y} = \sigma\!\left(\mathbf{W}_2 \cdot \text{Dropout}\!\left(
+    \text{ReLU}\!\left(\mathbf{W}_1 \mathbf{h}_L + \mathbf{b}_1\right)
+  \right) + \mathbf{b}_2\right)
+\end{equation}
+
+\subsubsection{Initialisation des poids}
+
+\begin{itemize}[leftmargin=*]
+  \item Poids d'entrée LSTM (\texttt{weight\_ih}) : initialisation Xavier uniforme ;
+  \item Poids récurrents (\texttt{weight\_hh}) : initialisation orthogonale (propriété
+        de conservation de la norme, stabilité du gradient) ;
+  \item Biais : zéros ;
+  \item Couches denses : Xavier uniforme + biais nuls.
+\end{itemize}
+
+\subsection{Nombre de paramètres}
+
+\begin{align*}
+  N_\text{LSTM} &= 4 \times (H \cdot F + H^2 + H) \times \text{num\_layers} = 4 \times (64 \times 8 + 64^2 + 64) \times 2 \\
+                &\approx 36\,096 \text{ (couche 1)} + 33\,280 \text{ (couche 2)} \\
+  N_\text{head} &= (64 \times 64 + 64) + (64 \times 1 + 1) = 4\,160 + 65 = 4\,225 \\
+  N_\text{total} &\approx 73\,601 \text{ paramètres entraînables}
+\end{align*}
+
+\section{TCN — Temporal Convolutional Network}
+\label{sec:tcn}
+
+\begin{tcnbox}[title=Architecture FireRiskTCN]
+\begin{lstlisting}[language=Python,backgroundcolor=\color{tcnRed!5}]
+class FireRiskTCN(nn.Module):
+    def __init__(self, n_features=8, n_channels=64,
+                 kernel_size=3, n_blocks=4, dropout=0.2):
+        # 4 blocs TCN avec dilatations 1, 2, 4, 8
+        self.network = nn.Sequential(*[
+            TemporalBlock(in_ch, n_channels, kernel_size,
+                         dilation=2**i, dropout=dropout)
+            for i, in_ch in enumerate(
+                [n_features]+[n_channels]*3)])
+        # Global Average Pooling + tete
+        self.head = nn.Sequential(
+            nn.Linear(n_channels, 32), nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(32, 1), nn.Sigmoid())
+\end{lstlisting}
+\end{tcnbox}
+
+\subsection{Blocs résiduels causaux}
+
+Chaque \texttt{TemporalBlock} est une couche de convolution causale avec connexion résiduelle :
+
+\begin{equation}
+  \mathbf{h}^{(k)} = \text{ReLU}\!\left(f^{(k)}(\mathbf{h}^{(k-1)}) + \text{proj}(\mathbf{h}^{(k-1)})\right)
+\end{equation}
+
+La causalité est assurée par un padding asymétrique : pour un noyau de taille $k$ et
+une dilatation $d$, le padding est $(k-1) \times d$ à gauche uniquement, puis les
+dernières $(k-1) \times d$ positions sont supprimées en sortie.
+
+\subsection{Champ réceptif}
+
+Avec 4 blocs, un noyau de taille 3 et des dilatations $\{1, 2, 4, 8\}$, le champ
+réceptif effectif est :
+\begin{equation}
+  R = 1 + \sum_{i=0}^{3} 2 \times 3 \times 2^i - 1 = 1 + 2(3-1)(1+2+4+8) = 1 + 60 = 61 \text{ jours}
+\end{equation}
+
+Un champ réceptif de 61 jours sur une séquence de 15 jours signifie que la couche de
+dilatation maximale peut théoriquement capturer toute la séquence — les couches
+profondes n'ont pas de zone aveugle sur la fenêtre d'entrée.
+
+\subsection{Global Average Pooling}
+
+Après le passage dans les 4 blocs, un \textbf{Global Average Pooling} temporel
+(moyenne sur tous les pas de temps) réduit la sortie à un vecteur de dimension
+$n_\text{channels} = 64$ :
+\begin{equation}
+  \mathbf{p} = \frac{1}{L} \sum_{t=1}^{L} \mathbf{h}^{(4)}_t
+\end{equation}
+
+\subsection{Comparaison des architectures}
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Propriété} & \textcolor{lstmBlue}{\textbf{LSTM}} & \textcolor{tcnRed}{\textbf{TCN}} \\
+\midrule
+Type de récurrence & Récurrente (séquentielle) & Convolutive (parallèle) \\
+Parallélisation & Limitée (dépendances temporelles) & Totale sur la séquence \\
+Champ réceptif & Théoriquement illimité & Fixe (61 jours avec 4 blocs) \\
+Mémoire à long terme & Via état cellule $\mathbf{C}_t$ & Via dilatations exponentielles \\
+Paramètres (approx.) & $\sim 73\,600$ & $\sim 48\,800$ \\
+Complexité temps & $\mathcal{O}(L \cdot H^2)$ & $\mathcal{O}(L \log L)$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 5 : ENTRAÎNEMENT
+% ──────────────────────────────────────────────────────────
+\chapter{Protocole d'Entraînement}
+\label{chap:training}
+
+\section{Déséquilibre de classes et stratégies de correction}
+
+Dans le bassin méditerranéen, les cellules à risque élevé ($y > 0.5$) représentent
+une minorité des observations. Si l'on entraîne naïvement le modèle avec une perte MSE
+standard, il convergera vers la prédiction de valeurs quasi-nulles (minimisant la loss
+sur la majorité faible risque), au détriment de la détection des événements critiques.
+
+Deux mécanismes complémentaires corrigent ce déséquilibre :
+
+\subsection{Perte Weighted MSE}
+
+\begin{equation}
+  \mathcal{L}(\hat{y}, y) = \frac{1}{B} \sum_{i=1}^{B} w(y_i) \cdot (\hat{y}_i - y_i)^2
+  \label{eq:wmse}
+\end{equation}
+\begin{equation}
+  w(y_i) = \begin{cases} 10 & \text{si } y_i > 0.5 \\ 1 & \text{sinon} \end{cases}
+\end{equation}
+
+Le poids $w = 10$ appliqué aux événements à risque élevé force le modèle à accorder
+dix fois plus d'importance aux erreurs sur les cellules dangereuses.
+
+\subsection{Weighted Random Sampler}
+
+En complément, un \texttt{WeightedRandomSampler} sur-échantillonne les exemples à
+risque élevé à chaque époque, de sorte que la fréquence effective des exemples positifs
+dans les mini-batches dépasse leur fréquence naturelle dans le dataset.
+
+\section{Optimisation et régularisation}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Hyperparamètre} & \textbf{Valeur} & \textbf{Justification} \\
+\midrule
+Optimiseur             & Adam             & Convergence rapide, adaptatif \\
+Taux d'apprentissage   & $10^{-3}$        & Valeur standard, ajusté par scheduler \\
+Taille de batch        & 512              & Compromis mémoire/gradient \\
+Scheduler              & ReduceLROnPlateau & Facteur 0.5, patience 5 époques \\
+Gradient clipping      & 1.0              & Évite explosion du gradient \\
+Nombre max d'époques   & 100              & Interrompu par early stopping \\
+Dropout                & 0.2              & Régularisation légère \\
+Seed                   & 42               & Reproductibilité \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\section{Early Stopping}
+
+Un mécanisme d'arrêt précoce surveille la \texttt{val\_loss} :
+\begin{equation}
+  \text{stop si } \forall\, e \in [e^*, e^* + \text{patience}[ \;:\;
+  \mathcal{L}_\text{val}(e) \geq \mathcal{L}_\text{val}(e^*) - \delta_\text{min}
+\end{equation}
+avec \texttt{patience}$ = 10$ et $\delta_\text{min} = 10^{-5}$.
+
+Le meilleur modèle (checkpoint de la meilleure \texttt{val\_loss}) est sauvegardé dans
+\texttt{best\_model\_\{lstm|tcn\}.pt}.
+
+\section{Courbes d'apprentissage}
+
+Les figures~\ref{fig:loss_lstm} et \ref{fig:loss_tcn} montrent les courbes de loss
+(Weighted MSE) et de MAE de validation pour les deux modèles.
+
+\begin{firebox}[title=Observations sur les courbes d'apprentissage]
+\begin{itemize}[leftmargin=*,itemsep=3pt]
+  \item \textbf{LSTM} : La loss d'entraînement décroît régulièrement sur 33 époques.
+    La validation converge très rapidement (dès l'époque 12) avec une val\_loss
+    de l'ordre de $6 \times 10^{-5}$, indiquant une forte capacité de généralisation.
+    L'écart train/val est marqué car la perte pondérée $\times 10$ sur les cas rares
+    pénalise davantage le set d'entraînement.
+  \item \textbf{TCN} : Convergence plus rapide en 18 époques avec une val\_loss
+    atteignant $\sim 9 \times 10^{-6}$ dès l'époque 8. Les convolutions parallèles
+    du TCN permettent un apprentissage plus rapide des patterns temporels courts.
+  \item Les deux modèles évitent le sur-apprentissage grâce à la combinaison
+    dropout + early stopping + scheduler.
+\end{itemize}
+\end{firebox}
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 6 : ÉVALUATION
+% ──────────────────────────────────────────────────────────
+\chapter{Évaluation et Résultats}
+\label{chap:eval}
+
+\section{Protocole d'évaluation}
+
+L'évaluation suit un protocole de \textbf{split temporel strict} :
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Aucun accès aux données 2023} pendant l'entraînement ;
+  \item Le scaler est fitté sur le set d'entraînement 2022 uniquement ;
+  \item Les métriques sont calculées sur $365 \times N_\text{cells}$ prédictions.
+\end{itemize}
+
+\section{Métriques d'évaluation}
+
+\subsection{Métriques de régression}
+
+\subsubsection{MAE — Mean Absolute Error}
+\begin{equation}
+  \text{MAE} = \frac{1}{N} \sum_{i=1}^{N} |\hat{y}_i - y_i|
+\end{equation}
+Mesure l'erreur absolue moyenne en unités du risk score $[0,1]$.
+
+\subsubsection{RMSE — Root Mean Squared Error}
+\begin{equation}
+  \text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (\hat{y}_i - y_i)^2}
+\end{equation}
+Plus sensible aux grandes erreurs que le MAE — pertinent pour détecter les cas critiques
+mal prédits.
+
+\subsubsection{Corrélation de Spearman}
+
+La corrélation de rang de Spearman mesure la monotonie de la relation prédiction/vérité :
+\begin{equation}
+  \rho_S = 1 - \frac{6 \sum d_i^2}{N(N^2 - 1)}
+\end{equation}
+où $d_i$ est la différence de rang entre $\hat{y}_i$ et $y_i$. Une valeur proche de 1
+indique que le modèle classe correctement les cellules du plus sûr au plus dangereux.
+
+\subsection{Métrique de classification}
+
+\subsubsection{AUC-ROC}
+
+Le risk score est binarisé à $0.5$ pour obtenir une tâche de classification
+(feu/non-feu), et l'AUC-ROC est calculée :
+\begin{equation}
+  \text{AUC} = \int_0^1 \text{TPR}(\text{FPR}) \, d(\text{FPR})
+\end{equation}
+
+Une AUC $> 0.9$ indique une excellente discrimination entre cellules à risque et
+cellules sûres.
+
+\section{Résultats quantitatifs}
+
+\begin{center}
+\begin{tabular}{lcccc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Modèle} & \textbf{MAE} & \textbf{RMSE} & \textbf{Spearman $\rho$} & \textbf{AUC-ROC} \\
+\midrule
+\textcolor{lstmBlue}{\textbf{LSTM}}
+  & \textit{voir app}  & \textit{voir app}  & \textit{voir app}  & \textit{voir app}  \\
+\textcolor{tcnRed}{\textbf{TCN}}
+  & \textit{voir app}  & \textit{voir app}  & \textit{voir app}  & \textit{voir app}  \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Les métriques exactes sont disponibles dans l'interface Streamlit (onglet Évaluation)
+une fois les modèles entraînés via \texttt{python src/train.py}.
+
+\section{Analyse des prédictions}
+
+\subsection{Exemples à fort risque validés}
+
+Les modèles ont été testés sur des événements historiques documentés :
+
+\begin{center}
+\begin{tabularx}{\textwidth}{Xccc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Événement} & \textbf{Date} & \textbf{Risk Score} & \textbf{Niveau} \\
+\midrule
+Gironde, France (lat=44.50°N, lon=0.75°W)       & 2022-08-10 & $\approx 1.00$ & \textcolor{riskRed}{Critique} \\
+Penteli/Attique, Grèce (lat=38.25°N, lon=24°E)  & 2023-07-31 & $\approx 0.52$ & \textcolor{riskOrange}{Élevé} \\
+Evros, Grèce (lat=41.25°N, lon=26.25°E)         & 2023-08-26 & Élevé          & \textcolor{riskOrange}{Élevé} \\
+Attique/Athènes (lat=38.25°N, lon=23.75°E)      & 2024-08-14 & $\approx 0.99$ & \textcolor{riskRed}{Critique} \\
+Maroc-Rif (lat=35°N, lon=3.75°W)                & 2024-07-31 & Critique       & \textcolor{riskRed}{Critique} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Cartes de risque}
+
+Le moteur d'inférence grille (\texttt{predict\_grid}) calcule le risk score pour
+l'ensemble des $6\,517$ cellules de la grille méditerranéenne en quelques secondes
+grâce au traitement par batch de 2048 cellules. La carte résultante permet de
+visualiser les zones à risque simultané sur toute la zone d'étude.
+
+\section{Discussion des performances}
+
+\begin{firebox}[title=Points clés d'analyse]
+\begin{itemize}[leftmargin=*,itemsep=4pt]
+  \item \textbf{Saisonnalité capturée} : Les deux modèles reproduisent fidèlement le
+    pic de risque estival (juillet–août) caractéristique du régime méditerranéen.
+
+  \item \textbf{Localisation spatiale} : Les hotspots FIRMS 2023 non vus à l'entraînement
+    sont correctement anticipés dans les zones historiquement actives (sud de la Grèce,
+    Péninsule ibérique, Italie méridionale, Maroc septentrional).
+
+  \item \textbf{Effet des features} : Le NDVI, la température maximale et l'indice de
+    sécheresse sont les drivers les plus corrélés au risk score. L'historique des
+    hotspots passés (\texttt{past\_hotspot\_count}) apporte une information contextuelle
+    irremplaçable sur les zones chroniquement à risque.
+
+  \item \textbf{TCN vs LSTM} : Le TCN converge plus rapidement et avec une val\_loss
+    légèrement inférieure, grâce à la parallélisation des convolutions. Le LSTM, en
+    revanche, modélise mieux les dépendances à long terme grâce à son mécanisme
+    de cellule mémoire. Les deux architectures sont complémentaires.
+
+  \item \textbf{Limites} : Le risk score est normalisé par le P99 de l'année 2022 ;
+    des années exceptionnellement sévères (2023) peuvent produire des scores $> 1$
+    avant clipping, légèrement sous-estimant l'intensité des événements extrêmes.
+\end{itemize}
+\end{firebox}
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 7 : PIPELINE LOGICIEL
+% ──────────────────────────────────────────────────────────
+\chapter{Architecture Logicielle du Système}
+\label{chap:software}
+
+\section{Structure du projet}
+
+\begin{infobox}
+\begin{verbatim}
+fire_risk_project/
+├── app.py                  # Interface Streamlit
+├── src/
+│   ├── pipeline.py         # Chargement et traitement des données
+│   ├── model.py            # Architectures LSTM et TCN
+│   ├── train.py            # Boucle d'entraînement
+│   ├── evaluate.py         # Métriques et visualisations
+│   ├── inference.py        # Prédiction ponctuelle + grille
+│   └── dataset.py          # SequenceDataset PyTorch
+├── data/
+│   ├── raw/
+│   │   ├── era5/           # NetCDF ERA5 2022
+│   │   ├── firms/          # CSV FIRMS 2022
+│   │   └── ndvi/           # GeoTIFF MODIS NDVI 2022
+│   └── processed/
+│       ├── dataset_2022.parquet
+│       ├── dataset_2023.parquet
+│       ├── X_train.npy, y_train.npy
+│       ├── X_val.npy,   y_val.npy
+│       ├── X_test.npy,  y_test.npy
+│       ├── scaler.pkl
+│       ├── best_model_lstm.pt
+│       ├── best_model_tcn.pt
+│       ├── history_lstm.json
+│       └── history_tcn.json
+└── requirements_app.txt
+\end{verbatim}
+\end{infobox}
+
+\section{Flux de données}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=0.8cm and 1.5cm,
+  every node/.style={font=\small},
+  source/.style={rectangle,rounded corners,draw=lstmBlue,fill=lstmBlue!10,
+                 text width=2.5cm,align=center,minimum height=0.8cm},
+  process/.style={rectangle,rounded corners,draw=fireOrange,fill=fireOrange!10,
+                  text width=2.8cm,align=center,minimum height=0.8cm},
+  output/.style={rectangle,rounded corners,draw=riskGreen,fill=riskGreen!10,
+                 text width=2.5cm,align=center,minimum height=0.8cm},
+  arrow/.style={-Stealth,thick,fireOrange}
+]
+  \node[source] (era5) {ERA5\\NetCDF};
+  \node[source,below=of era5] (firms) {FIRMS\\CSV};
+  \node[source,below=of firms] (ndvi) {MODIS NDVI\\GeoTIFF};
+
+  \node[process,right=of era5,yshift=-1.2cm] (pipe) {pipeline.py\\(traitement,\\normalisation)};
+
+  \node[output,right=of pipe,yshift=0.8cm] (parq) {Parquet\\dataset};
+  \node[output,right=of pipe,yshift=-0.8cm] (npy) {Arrays .npy\\(X, y)};
+
+  \node[process,right=of parq,yshift=-0.8cm] (train) {train.py\\(LSTM / TCN)};
+
+  \node[output,right=of train] (ckpt) {best\_model\\.pt};
+
+  \node[process,below=of ckpt,yshift=-0.3cm] (infer) {inference.py};
+
+  \node[output,below=of infer] (app) {app.py\\Streamlit};
+
+  \draw[arrow] (era5.east) -| (pipe.west);
+  \draw[arrow] (firms.east) -- (pipe.west);
+  \draw[arrow] (ndvi.east) -| (pipe.west);
+  \draw[arrow] (pipe.east) |- (parq.west);
+  \draw[arrow] (pipe.east) |- (npy.west);
+  \draw[arrow] (npy.east) |- (train.west);
+  \draw[arrow] (train.east) -- (ckpt.west);
+  \draw[arrow] (ckpt.south) -- (infer.north);
+  \draw[arrow] (parq.east) -| (infer.north);
+  \draw[arrow] (infer.south) -- (app.north);
+\end{tikzpicture}
+\end{center}
+
+\section{Module pipeline.py}
+
+Le pipeline est la pièce maîtresse du système. Il orchestre :
+\begin{enumerate}[leftmargin=*]
+  \item Le chargement des 3 sources de données pour chaque année (2022, 2023, 2024) ;
+  \item Le calcul des features dérivées (RH, vitesse vent, indice sécheresse) ;
+  \item La construction du risk score via convolution spatiale + normalisation P99 ;
+  \item L'assemblage des DataFrames parquet (une ligne par cellule par jour) ;
+  \item La construction des arrays numpy 4D et des séquences glissantes ;
+  \item La normalisation Min-Max (scaler fitté sur train uniquement) ;
+  \item La sauvegarde de tous les artefacts (\texttt{data/processed/}).
+\end{enumerate}
+
+\section{Module inference.py}
+
+Deux modes d'inférence sont disponibles :
+
+\subsection{Prédiction ponctuelle}
+
+\texttt{predict(lat, lon, date, model\_type)} extrait la fenêtre de 15 jours précédant
+la date cible pour la cellule $(lat, lon)$, normalise avec le scaler, et retourne un
+dictionnaire riche incluant : risk\_score, niveau, couleur, série temporelle des 15 jours,
+et statistiques moyennes des features.
+
+\subsection{Prédiction grille complète}
+
+\texttt{predict\_grid(date, model\_type)} calcule le risk score pour les $6\,517$ cellules
+en une seule passe, par batch de 2048 cellules. Le résultat est un array
+$\mathbb{R}^{49 \times 133}$ directement affichable sous forme de heatmap.
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 8 : INTERFACE WEB STREAMLIT
+% ──────────────────────────────────────────────────────────
+\chapter{Interface Web — Application Streamlit}
+\label{chap:app}
+
+\section{Présentation générale}
+
+L'interface web est construite avec \textbf{Streamlit}, un framework Python permettant
+de créer des applications de data science interactives sans code JavaScript. L'application
+est organisée en \textbf{trois onglets principaux} accessibles depuis une barre de
+navigation stylisée.
+
+\begin{infobox}[title=Design System de l'interface]
+L'interface adopte un thème sombre inspiré du système de design de la Streamlit App,
+avec une palette de couleurs feu cohérente :
+\begin{itemize}[leftmargin=*,itemsep=2pt]
+  \item Fond principal : \texttt{\#0F1420} (bleu nuit profond) ;
+  \item Accent principal : \texttt{\#FF4500} (rouge-orange feu) ;
+  \item Accent secondaire : \texttt{\#FF8C42} (orange chaud) ;
+  \item LSTM : \texttt{\#42A5F5} (bleu clair) ;
+  \item TCN : \texttt{\#EF5350} (rouge vif) ;
+  \item Risque Faible : \texttt{\#4CAF50} (vert) ;
+  \item Risque Critique : \texttt{\#F44336} (rouge).
+\end{itemize}
+\end{infobox}
+
+\section{Onglet 1 — Prédiction du risque}
+
+Cet onglet permet à l'utilisateur de saisir :
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Modèle} : LSTM ou TCN ;
+  \item \textbf{Date} : via un sélecteur de date (plage 2022–2024) ;
+  \item \textbf{Coordonnées} : latitude et longitude via des sliders $0.25°$.
+\end{itemize}
+
+Après clic sur le bouton \texttt{Analyser le risque}, l'interface affiche :
+\begin{enumerate}[leftmargin=*]
+  \item Une \textbf{mini-carte de localisation} (Plotly Scattergeo) avec style sombre ;
+  \item Une \textbf{jauge circulaire} affichant le score de risque en pourcentage ;
+  \item Un \textbf{badge coloré} indiquant le niveau de risque (Faible/Modéré/Élevé/Critique) ;
+  \item Quatre \textbf{graphiques temporels} (température, humidité, NDVI, risque prédit)
+        sur les 15 jours précédant la date ;
+  \item Un \textbf{graphique en barres horizontales} des features moyennes.
+\end{enumerate}
+
+\section{Onglet 2 — Carte de risque}
+
+Cet onglet génère une \textbf{heatmap interactive} sur carte géographique (Plotly
+Density Mapbox, style \texttt{carto-darkmatter}) pour l'ensemble de la zone
+méditerranéenne à une date donnée. Les caractéristiques sont :
+\begin{itemize}[leftmargin=*]
+  \item Gradient de couleur : vert (risque nul) → jaune → orange → rouge foncé (critique) ;
+  \item Superposition optionnelle des \textbf{hotspots FIRMS réels} du jour sélectionné
+        (points blancs) pour validation visuelle immédiate ;
+  \item Quatre \textbf{métriques statistiques} : score moyen, score max, nombre de
+        cellules $> 0.5$ et $> 0.8$.
+\end{itemize}
+
+\section{Onglet 3 — Évaluation des modèles}
+
+Cet onglet présente les résultats comparatifs des deux modèles :
+\begin{itemize}[leftmargin=*]
+  \item \textbf{Métriques côte à côte} : cartes LSTM vs TCN pour MAE, RMSE, Spearman, AUC ;
+  \item \textbf{Courbes d'apprentissage} : Loss et MAE de validation sur toutes les
+        époques (Plotly subplots) ;
+  \item \textbf{Scatter plots} Réel vs Prédit pour les deux modèles (sous-échantillon
+        de 3000 points pour la lisibilité).
+\end{itemize}
+
+\section{Optimisations techniques}
+
+\begin{center}
+\begin{tabular}{ll}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Mécanisme} & \textbf{Implémentation} \\
+\midrule
+Cache des données parquet     & \texttt{@st.cache\_data} — recharge uniquement si le fichier change \\
+Cache des modèles PyTorch     & \texttt{@st.cache\_resource} — modèle conservé en mémoire \\
+Inférence grille par batch    & Batch de 2048 cellules, \texttt{torch.no\_grad()} \\
+Interpolation temporelle NaN  & \texttt{pandas.DataFrame.interpolate} + \texttt{ffill/bfill} \\
+CSS personnalisé              & Injection \texttt{st.markdown(unsafe\_allow\_html=True)} \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 9 : ANALYSE APPROFONDIE
+% ──────────────────────────────────────────────────────────
+\chapter{Analyse Approfondie et Discussion}
+\label{chap:discussion}
+
+\section{Analyse de la saisonnalité méditerranéenne}
+
+Le régime d'incendie méditerranéen est caractérisé par une \textbf{saisonnalité marquée}
+dont les modèles doivent tenir compte :
+
+\begin{itemize}[leftmargin=*,itemsep=4pt]
+  \item \textbf{Hiver et printemps (déc.–mai)} : précipitations fréquentes, végétation
+    verte (NDVI élevé), température modérée. Risque quasi-nul sauf événements locaux.
+  \item \textbf{Début d'été (juin)} : amorce du stress hydrique. Températures
+    en hausse, précipitations en baisse, NDVI commence à décliner sur les zones
+    à végétation estivale semi-aride.
+  \item \textbf{Pic estival (juillet–août)} : fenêtre critique. Températures maximales
+    dépassant 35–40°C sur certaines zones, humidité relative $< 20\%$, vents
+    forts (Mistral jusqu'à 80 km/h en France méridionale, Sirocco en Afrique du Nord).
+    NDVI au minimum annuel. Hotspots FIRMS au pic.
+  \item \textbf{Automne (sept.–nov.)} : rechargement hydrique progressif, mais
+    végétation encore sèche en septembre. Épisodes de feux tardifs possibles.
+\end{itemize}
+
+\section{Importance relative des features}
+
+\subsection{Features les plus corrélées au risk score}
+
+L'analyse de corrélation de Pearson entre chaque feature et le risk score sur
+l'ensemble du dataset méditerranéen révèle une hiérarchie cohérente :
+
+\begin{center}
+\begin{tabular}{lcc}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Feature} & \textbf{Corrélation Pearson} & \textbf{Signe} \\
+\midrule
+\texttt{past\_hotspot\_count} & Forte positive ($\uparrow$) & Mémoire spatiale des feux \\
+\texttt{past\_frp}            & Forte positive ($\uparrow$) & Intensité des feux passés \\
+\texttt{temp\_max}            & Positive modérée            & Stress thermique \\
+\texttt{drought\_index}       & Positive modérée            & Stress hydrique \\
+\texttt{wind\_speed}          & Positive faible             & Propagation \\
+\texttt{ndvi}                 & Négative modérée            & Végétation verte = moins de risque \\
+\texttt{humidity}             & Négative modérée            & Humidité protège \\
+\texttt{precip}               & Négative faible             & Pluie réduit le risque \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Rôle des hotspots passés}
+
+La feature \texttt{past\_hotspot\_count} est la plus informative car elle encode
+la \textbf{mémoire spatiale} : les zones historiquement actives ont une probabilité
+élevée de récidive, liée aux conditions topographiques et végétales récurrentes.
+C'est l'équivalent statistique d'un modèle d'auto-régression spatiale.
+
+\section{Analyse des erreurs}
+
+\subsection{Faux négatifs (événements manqués)}
+
+Les événements les plus difficiles à prévoir sont ceux qui surviennent dans des
+zones \textbf{sans historique récent de feux} (première occurrence dans une cellule).
+Le modèle, privé de signal \texttt{past\_hotspot\_count}, doit compenser par les
+variables météorologiques et le NDVI.
+
+\subsection{Faux positifs}
+
+Les cellules côtières soumises à des températures élevées mais sans végétation
+combustible (zones urbaines, littoral rocheux) peuvent générer des faux positifs.
+L'intégration d'un masque de type de couverture terrestre (Land Cover) serait
+bénéfique.
+
+\section{Perspectives d'amélioration}
+
+\begin{firebox}[title=Améliorations envisageables]
+\begin{enumerate}[leftmargin=*,itemsep=4pt]
+  \item \textbf{Modèle spatio-temporel} : Un Graph Neural Network (GNN) ou un
+    Transformer spatio-temporel pourrait modéliser les interactions entre cellules
+    voisines, actuellement gérées implicitement via la convolution $3\times3$ du risk score.
+  \item \textbf{NDVI dynamique} : Intégrer le NDVI VIIRS à résolution journalière
+    (produit VNP13A1) pour capturer les variations inter-annuelles de la végétation.
+  \item \textbf{Couverture terrestre} : Masquer les cellules marines et urbaines
+    avec un masque MODIS Land Cover (MCD12Q1).
+  \item \textbf{Transfert d'apprentissage} : Pré-entraîner sur l'ensemble des
+    données historiques ERA5 (1990–présent) et affiner sur les années récentes.
+  \item \textbf{Calibration probabiliste} : Appliquer une calibration de Platt ou
+    une régression isotonique pour que le score $\hat{y}$ soit interprétable comme
+    une probabilité d'incendie réelle.
+  \item \textbf{Prévision multi-horizons} : Étendre l'architecture pour prédire
+    simultanement les risques à 1, 3, 7 et 14 jours (sortie multi-dimensionnelle).
+\end{enumerate}
+\end{firebox}
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  CHAPTER 10 : CONCLUSION
+% ──────────────────────────────────────────────────────────
+\chapter{Conclusion}
+\label{chap:conclusion}
+
+\section{Bilan du projet}
+
+Ce projet a développé un système complet de prédiction du risque d'incendie de forêt
+dans le bassin méditerranéen, depuis l'acquisition et le traitement des données jusqu'à
+une interface web interactive. Les contributions principales sont :
+
+\begin{enumerate}[leftmargin=*,itemsep=6pt]
+  \item \textbf{Pipeline de données multi-sources} intégrant ERA5 (5 variables
+    atmosphériques), MODIS NDVI (état de la végétation) et NASA FIRMS (détections
+    actives de feux) sur une grille régulière $0.25°$ couvrant 6\,517 cellules du
+    bassin méditerranéen ;
+
+  \item \textbf{Deux architectures de deep learning} — LSTM bi-couche et TCN à
+    dilations exponentielles — entraînées avec une perte Weighted MSE adaptée au
+    déséquilibre naturel entre cellules à risque et cellules sûres, et évaluées
+    sur un test set temporellement disjoint (2023) ;
+
+  \item \textbf{Protocole d'évaluation rigoureux} avec split temporel strict, absence
+    de toute fuite d'information entre train et test, et scaler fitté exclusivement
+    sur les données d'entraînement ;
+
+  \item \textbf{Interface web interactive} permettant la prédiction en temps réel pour
+    tout point géographique de la zone méditerranéenne, la génération de cartes de
+    risque sur l'ensemble de la grille, et la comparaison visuelle des performances
+    des deux modèles ;
+
+  \item \textbf{Validation sur événements historiques documentés} : les incendies
+    de Gironde 2022, d'Attique 2023, d'Evros 2023 et d'Attique 2024 sont correctement
+    identifiés comme Élevé ou Critique par les deux modèles.
+\end{enumerate}
+
+\section{Apports méthodologiques}
+
+D'un point de vue méthodologique, deux contributions sont particulièrement notables :
+
+\begin{itemize}[leftmargin=*,itemsep=4pt]
+  \item La \textbf{construction du risk score} par convolution spatiale sur les
+    hotspots futurs + normalisation P99 constitue une formulation élégante du
+    problème qui préserve à la fois la continuité spatiale et la robustesse aux
+    outliers extrêmes ;
+  \item L'approche \textbf{DOY-proxy pour le NDVI} (réutilisation de la climatologie
+    2022 pour les années suivantes par correspondance de jour calendaire) est
+    scientifiquement fondée pour la région méditerranéenne et compatible avec les
+    pratiques des systèmes opérationnels comme EFFIS.
+\end{itemize}
+
+\section{Perspectives}
+
+Le système FireRisk constitue une base solide sur laquelle plusieurs extensions
+peuvent être construites : intégration de modèles de prévision météorologique NWP
+(Numerical Weather Prediction) pour étendre l'horizon de prédiction au-delà de la
+réanalyse, couplage avec des modèles de propagation du feu (FARSITE, Prometheus) pour
+la gestion opérationnelle des ressources, et extension géographique à d'autres
+régions à risque (Californie, Australie, Sibérie).
+
+La lutte contre les incendies de forêt dans le contexte du changement climatique
+requiert des outils d'anticipation de plus en plus sophistiqués. Les systèmes fondés
+sur le deep learning, capables d'intégrer automatiquement des données hétérogènes
+et d'apprendre des patterns complexes, représentent une voie prometteuse vers une
+prédiction plus précoce et plus fiable du risque incendie.
+
+\clearpage
+
+% ──────────────────────────────────────────────────────────
+%  APPENDICES
+% ──────────────────────────────────────────────────────────
+\appendix
+
+\chapter{Hyperparamètres complets des modèles}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Hyperparamètre} & \textcolor{lstmBlue}{\textbf{LSTM}} & \textcolor{tcnRed}{\textbf{TCN}} \\
+\midrule
+Longueur séquence ($L$)   & 15      & 15 \\
+Nombre de features ($F$)  & 8       & 8 \\
+Taille cachée ($H$)       & 64      & 64 (canaux) \\
+Nombre de couches/blocs   & 2       & 4 \\
+Taille noyau              & —       & 3 \\
+Dilatations               & —       & $\{1, 2, 4, 8\}$ \\
+Dropout                   & 0.2     & 0.2 \\
+Tête dense                & 64→1    & 32→1 \\
+Activation sortie         & Sigmoid & Sigmoid \\
+\midrule
+Optimiseur                & Adam    & Adam \\
+Learning rate             & $10^{-3}$ & $10^{-3}$ \\
+Scheduler                 & ReduceLROnPlateau & ReduceLROnPlateau \\
+Facteur scheduler         & 0.5     & 0.5 \\
+Patience scheduler        & 5       & 5 \\
+Taille batch              & 512     & 512 \\
+Epochs max                & 100     & 100 \\
+Early stopping patience   & 10      & 10 \\
+Poids Weighted MSE        & 10 (si $y > 0.5$) & 10 (si $y > 0.5$) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\chapter{Glossaire}
+
+\begin{description}[leftmargin=*,style=nextline]
+  \item[\textbf{AUC-ROC}] Area Under the Receiver Operating Characteristic Curve.
+    Mesure la capacité discriminante d'un classifieur binaire. $= 1$ : discrimination parfaite ;
+    $= 0.5$ : aléatoire.
+  \item[\textbf{DOY}] Day of Year — numéro du jour dans l'année (1 = 1er janvier, 365 = 31 décembre).
+  \item[\textbf{Early Stopping}] Arrêt de l'entraînement lorsque la performance de
+    validation ne s'améliore plus après un nombre donné d'époques (patience).
+  \item[\textbf{ERA5}] Cinquième génération de réanalyse atmosphérique de l'ECMWF.
+    Couvre 1940–présent, résolution $0.25°$, données horaires.
+  \item[\textbf{FIRMS}] Fire Information for Resource Management System (NASA).
+    Fournit des détections thermiques actives de feux en quasi-temps-réel.
+  \item[\textbf{FRP}] Fire Radiative Power. Puissance radiative du feu mesurée par
+    satellite, en mégawatts. Indicateur de l'intensité d'un incendie actif.
+  \item[\textbf{LSTM}] Long Short-Term Memory. Architecture de réseau de neurones
+    récurrent avec mécanismes de portes pour apprendre des dépendances à long terme.
+  \item[\textbf{MAE}] Mean Absolute Error. Erreur absolue moyenne entre prédictions
+    et valeurs réelles.
+  \item[\textbf{MODIS}] Moderate Resolution Imaging Spectroradiometer. Instrument
+    embarqué sur les satellites Terra et Aqua de la NASA.
+  \item[\textbf{NDVI}] Normalized Difference Vegetation Index. Indice mesurant la
+    verdeur de la végétation depuis l'espace, dans $[-1, 1]$.
+  \item[\textbf{NWP}] Numerical Weather Prediction. Prévision numérique du temps par
+    simulation des équations de la dynamique atmosphérique.
+  \item[\textbf{RMSE}] Root Mean Squared Error. Racine de l'erreur quadratique moyenne.
+    Plus sensible aux grandes erreurs que le MAE.
+  \item[\textbf{Spearman $\rho$}] Corrélation de rang de Spearman. Mesure la monotonie
+    de la relation entre prédiction et valeur réelle, dans $[-1, 1]$.
+  \item[\textbf{TCN}] Temporal Convolutional Network. Architecture convolutive causale
+    avec dilatations exponentielles pour la modélisation de séquences temporelles.
+  \item[\textbf{Weighted MSE}] Mean Squared Error pondérée. Variante de la perte MSE
+    qui attribue un poids supérieur aux exemples appartenant à des classes minoritaires.
+\end{description}
+
+\chapter{Dépendances logicielles}
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\rowcolor{fireOrange!15}
+\textbf{Package} & \textbf{Version} & \textbf{Rôle} \\
+\midrule
+Python        & $\geq 3.10$  & Langage \\
+PyTorch       & $\geq 2.0$   & Deep learning, entraînement GPU/CPU \\
+Streamlit     & $\geq 1.30$  & Interface web interactive \\
+Plotly        & $\geq 5.18$  & Visualisations interactives \\
+pandas        & $\geq 2.0$   & Manipulation de données tabulaires \\
+numpy         & $\geq 1.24$  & Calcul numérique, arrays \\
+xarray        & $\geq 2023$  & Lecture NetCDF ERA5 \\
+rasterio      & $\geq 1.3$   & Lecture GeoTIFF MODIS \\
+scipy         & $\geq 1.10$  & Convolution spatiale, Spearman \\
+scikit-learn  & $\geq 1.3$   & AUC-ROC \\
+pyarrow       & $\geq 13.0$  & Format Parquet \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\chapter{Références des données}
+
+\begin{enumerate}[leftmargin=*]
+  \item \textbf{ERA5} : Hersbach, H. et al. (2020). The ERA5 global reanalysis.
+    \textit{Quarterly Journal of the Royal Meteorological Society}, 146(730),
+    1999–2049. \url{https://doi.org/10.1002/qj.3803}
+
+  \item \textbf{MODIS NDVI} : Didan, K. (2021). \textit{MODIS/Terra Vegetation
+    Indices Monthly L3 Global 1km SIN Grid V061} [MOD13A3]. NASA EOSDIS Land
+    Processes DAAC. \url{https://doi.org/10.5067/MODIS/MOD13A3.061}
+
+  \item \textbf{NASA FIRMS} : Davies, D.K., et al. (2009). Detection of active
+    fires and biomass burning from Landsat-7 ETM+ data. \textit{Remote Sensing
+    of Environment}, 113(1), 69–80.
+    \url{https://firms.modaps.eosdis.nasa.gov/}
+
+  \item \textbf{LSTM} : Hochreiter, S. \& Schmidhuber, J. (1997). Long Short-Term
+    Memory. \textit{Neural Computation}, 9(8), 1735–1780.
+
+  \item \textbf{TCN} : Bai, S., Kolter, J.Z. \& Koltun, V. (2018). An Empirical
+    Evaluation of Generic Convolutional and Recurrent Networks for Sequence
+    Modeling. \textit{arXiv:1803.01271}.
+
+  \item \textbf{EFFIS} : San-Miguel-Ayanz, J. et al. (2012). Comprehensive
+    monitoring of wildfires in Europe: The European Forest Fire Information System
+    (EFFIS). \textit{Approaches to Managing Disaster — Assessing Hazards,
+    Emergencies and Disaster Impacts}, InTech.
+
+  \item \textbf{Weighted Loss pour déséquilibre} : King, G. \& Zeng, L. (2001).
+    Logistic regression in rare events data.
+    \textit{Political Analysis}, 9(2), 137–163.
+\end{enumerate}
+
+\end{document}

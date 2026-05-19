@@ -24,8 +24,12 @@ notebooks/exploration_demo.html
 
 # ── Data — raw (large geospatial files) ───────────────────────────────────────
 data/raw/era5/*.nc
+data/raw/era5_2023/*.nc
+data/raw/era5_2024/*.nc
 data/raw/ndvi/*.tif
 data/raw/firms/*.csv
+data/raw/firms_2023/*.csv
+data/raw/firms_2024/*.csv
 
 # ── Data — processed (generated, reproducible from pipeline) ──────────────────
 data/processed/*.npy
@@ -53,6 +57,17 @@ desktop.ini
 .idea/
 *.sublime-project
 *.sublime-workspace
+
+# ── LaTeX auxiliary files ─────────────────────────────────────────────────────
+report/*.aux
+report/*.log
+report/*.toc
+report/*.out
+report/*.bcf
+report/*.run.xml
+report/*.synctex.gz
+report/*.fls
+report/*.fdb_latexmk
 
 # ── Logs & temp ───────────────────────────────────────────────────────────────
 *.log
